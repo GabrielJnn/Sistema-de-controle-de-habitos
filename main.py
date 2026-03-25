@@ -34,40 +34,46 @@ while True:
             i = input(
                 "opções: 1 marcar frequencia /// 2 deletar hábito /// 3 ver histórico //// 4 para voltar\n>>>")
             if i == "1":
-                # try:
-                cur.execute("SELECT name FROM habitos")
-                x = cur.fetchall()
-                cur.execute("SELECT id FROM habitos")
-                id = cur.fetchall()
-                for counter in x:
-                    for change in counter:
-                        print(
-                            f"habito {id[x.index(counter)][0]} >> {change}")
-                i2 = int(
-                    input("Digite o numero do Hábito que vai ser marcado >> "))
-                cur.execute("SELECT name FROM habitos WHERE id = %s", (i2,))
-                i2 = cur.fetchall()
-                cur.execute(
-                    "INSERT INTO records (frequencia, habito_name) VALUES (1, %s)", (i2))
+                try:
+                    cur.execute("SELECT name FROM habitos")
+                    x = cur.fetchall()
+                    cur.execute("SELECT id FROM habitos")
+                    id = cur.fetchall()
+                    for counter in x:
+                        for change in counter:
+                            print(
+                                f"habito {id[x.index(counter)][0]} >> {change}")
+                    i2 = int(
+                        input("Digite o numero do Hábito que vai ser marcado >> "))
+                    cur.execute(
+                        "SELECT name FROM habitos WHERE id = %s", (i2,))
+                    i2 = cur.fetchall()
+                    cur.execute(
+                        "INSERT INTO records (frequencia, habito_name) VALUES (1, %s)", (i2))
+                    conn.commit()
+                except:
+                    print("não existe nenhum hábito")
 # tirar update e transformar em insert into
-                conn.commit()
             elif i == "2":
-                cur.execute("SELECT name FROM habitos")
-                x = cur.fetchall()
-                cur.execute("SELECT id FROM habitos")
-                id = cur.fetchall()
-                for counter in x:
-                    for change in counter:
-                        print(
-                            f"habito {id[x.index(counter)][0]} >> {change}")
-                i2 = int(
-                    input("Digite o numero do Hábito que vai ser deletado >> "))
-                cur.execute(
-                    "DELETE FROM habitos WHERE id = %s", (i2,))
-                conn.commit()
+                try:
+                    cur.execute("SELECT name FROM habitos")
+                    x = cur.fetchall()
+                    cur.execute("SELECT id FROM habitos")
+                    id = cur.fetchall()
+                    for counter in x:
+                        for change in counter:
+                            print(
+                                f"habito {id[x.index(counter)][0]} >> {change}")
+                    i2 = int(
+                        input("Digite o numero do Hábito que vai ser deletado >> "))
+                    cur.execute(
+                        "DELETE FROM habitos W2HERE id = %s", (i2,))
+                    conn.commit()
+                except:
+                    print("não existe habitos")
             elif i == "3":
                 cur.execute(
-                    "SELECT habito_name, frequencia, hora FROM records")
+                    "SELECT habito_name, frequencia, hora FROM records WHERE frequencia > 0")
                 x = cur.fetchall()
                 newStr = ""
                 for a in x:
