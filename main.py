@@ -16,10 +16,10 @@ def criar_tabelas():
         cur.execute(
         "CREATE TABLE IF NOT EXISTS records (id SERIAL PRIMARY KEY, habito_name VARCHAR(100), frequencia INT DEFAULT 0, hora DATE DEFAULT CURRENT_DATE, FOREIGN KEY (habito_name) REFERENCES habitos(name) ON DELETE CASCADE)")
         conn.commit()
+        return(True)
     except:
-        print('erro 1')
         conn.rollback()
-criar_tabelas()
+        return(False)
 def main():
     while True:
         i = input("digite 1 para criar um hábito      digite 2 para acessar informações dos hábitos       digite 3 para sair    digite 4 para apagar todos os dados\n>>>")
@@ -124,4 +124,5 @@ def main():
                 conn.commit()
             except:
                 print("ruim ERRORR")
+criar_tabelas()
 main()
