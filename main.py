@@ -4,7 +4,7 @@ import psycopg2
 
 
 conn = psycopg2.connect(
-    "dbname=sistema_de_controle_de_habitos user=postgres password=1234")
+    "host=127.0.0.1 dbname=sistema_de_controle_de_habitos user=postgres password=1234")
 
 def criar_tabelas():
 
@@ -22,6 +22,7 @@ def criar_tabelas():
         return(False)
 def main():
     while True:
+        cur = conn.cursor()
         i = input("digite 1 para criar um hábito      digite 2 para acessar informações dos hábitos       digite 3 para sair    digite 4 para apagar todos os dados\n>>>")
         if i == "1":
             try:
