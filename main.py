@@ -4,120 +4,114 @@ import psycopg2
 
 app = FastAPI()
 
-conn = psycopg2.connect(
-    "host=127.0.0.1 dbname=sistema_de_controle_de_habitos user=postgres password=1234")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-@app.get("/")
+def get_db_connection():
+    return psycopg2.connect("host=127.0.0.1 dbname=sistema_de_controle_de_habitos user=postgres password=1234")
+
+@app.post("/criar_tabelas")
 def criar_tabelas():
-
     try:
+        conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute(
-            "CREATE TABLE IF NOT EXISTS habitos (id SERIAL PRIMARY KEY, name VARCHAR(200) UNIQUE)")
+        cur.execute("CREATE TABLE IF NOT EXISTS habitos (id SERIAL PRIMARY KEY, name VARCHAR(200) UNIQUE)")
+        cur.execute("CREATE TABLE IF NOT EXISTS records (id SERIAL PRIMARY KEY, habito_name VARCHAR(100), frequencia INT DEFAULT 0, hora DATE DEFAULT CURRENT_DATE, FOREIGN KEY (habito_name) REFERENCES habitos(name) ON DELETE CASCADE)")
         conn.commit()
-        cur.execute(
-        "CREATE TABLE IF NOT EXISTS records (id SERIAL PRIMARY KEY, habito_name VARCHAR(100), frequencia INT DEFAULT 0, hora DATE DEFAULT CURRENT_DATE, FOREIGN KEY (habito_name) REFERENCES habitos(name) ON DELETE CASCADE)")
-        conn.commit()
-        return(True)
-    except:
-        conn.rollback()
-        return(False)
-@app.get("/criar_habito")
+        cur.close()
+        conn.close()
+        return {"status": "success", "message": "Tabelas criadas com sucesso"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/criar_habito")
 def criar_habito(nameHabit: str):
     try:
+        conn = get_db_connection()
         cur = conn.cursor() 
-        cur.execute("INSERT INTO habitos (name) VALUES (%s)",
-                (nameHabit,))
-        cur.execute(
-        "INSERT INTO records (habito_name) VALUES (%s)", (nameHabit,))
-    except:
-        print("Erro o nome deve ser único")
-        conn.rollback()
+        cur.execute("INSERT INTO habitos (name) VALUES (%s)", (nameHabit,))
+        cur.execute("INSERT INTO records (habito_name) VALUES (%s)", (nameHabit,))
         conn.commit()
+        cur.close()
+        conn.close()
+        return {"status": "success", "message": f"Hábito '{nameHabit}' criado"}
+    except Exception as e:
+        return {"status": "error", "message": "Erro, o nome deve ser único ou inválido"}
+
 @app.get("/informacoes_habitos")
 def informacoes_habitos():
-           
-            @app.get("/marcar_frequencia")
-            def marcar_frequencia():
-                try:
-                    cur.execute("SELECT name FROM habitos")
-                    x = cur.fetchall()
-                    cur.execute("SELECT id FROM habitos")
-                    id = cur.fetchall()
-                    for counter in x:
-                        for change in counter:
-                            print(
-                                f"habito {id[x.index(counter)][0]} >> {change}")
-                    i2 = int(
-                        input("Digite o numero do Hábito que vai ser marcado >> "))
-                    cur.execute(
-                        "SELECT name FROM habitos WHERE id = %s", (i2,))
-                    i2 = cur.fetchall()
-                    cur.execute(
-                        "INSERT INTO records (frequencia, habito_name) VALUES (1, %s)", (i2))
-                    conn.commit()
-                except:
-                    print("não existe nenhum hábito")
-# tirar update e transformar em insert into
-            @app.get("/deletar_habito")
-            def deletar_habito(): 
-                try:
-                    cur.execute("SELECT name FROM habitos")
-                    x = cur.fetchall()
-                    cur.execute("SELECT id FROM habitos")
-                    id = cur.fetchall()
-                    for counter in x:
-                        for change in counter:
-                            print(
-                                f"habito {id[x.index(counter)][0]} >> {change}")
-                    i2 = int(
-                        input("Digite o numero do Hábito que vai ser deletado >> "))
-                    cur.execute(
-                        "DELETE FROM habitos W2HERE id = %s", (i2,))
-                    conn.commit()
-                except:
-                    print("não existe habitos")
-            @app.get("/ver_historico")
-            def ver_historico():
-                cur.execute(
-                    "SELECT habito_name, frequencia, hora FROM records WHERE frequencia > 0")
-                x = cur.fetchall()
-                newStr = ""
-                for a in x:
-                    newStr += "\n"
-                    for b in a:
-                        if a.index(b) == 0:
-                            newStr += (f"Habito {b}")
-                        elif a.index(b) == 1:
-                            newStr += (f" frequência {b}")
-                        elif a.index(b) == 2:
-                            newStr += (
-                                f" Seu registro foi em {str(b).replace("datetime.date", "")}")
-                print(newStr)
-                (cur.execute(
-                    "SELECT habito_name, COUNT(frequencia) FROM records GROUP BY habito_name"))
-                newStr = ""
-                for a in cur.fetchall():
-                    for b in a:
-                        if a.index(b) == 0:
-                            newStr = f"hábito: {b}"
-                        if a.index(b) == 1:
-                            newStr += f" frequência total: {b-1}"
-                    print(newStr)
-@app.get("/apagar_dados")
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT id, name FROM habitos")
+        habitos = [{"id": row[0], "name": row[1]} for row in cur.fetchall()]
+        cur.close()
+        conn.close()
+        return {"status": "success", "data": habitos}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/marcar_frequencia/{habito_id}")
+def marcar_frequencia(habito_id: int):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT name FROM habitos WHERE id = %s", (habito_id,))
+        resultado = cur.fetchone()
+        if not resultado:
+            return {"status": "error", "message": "Hábito não existe"}
+        nome = resultado[0]
+        cur.execute("INSERT INTO records (frequencia, habito_name) VALUES (1, %s)", (nome,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return {"status": "success", "message": f"Frequência marcada para '{nome}'"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.delete("/deletar_habito/{habito_id}")
+def deletar_habito(habito_id: int):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM habitos WHERE id = %s", (habito_id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return {"status": "success", "message": "Hábito deletado com sucesso"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/ver_historico")
+def ver_historico():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT habito_name, SUM(frequencia) FROM records GROUP BY habito_name")
+        historico = [{"name": row[0], "frequencia": row[1]} for row in cur.fetchall()]
+        cur.close()
+        conn.close()
+        return {"status": "success", "data": historico}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.delete("/apagar_dados")
 def apagar_dados():
     try:
-
+        conn = get_db_connection()
+        cur = conn.cursor()
         cur.execute("DROP TABLE IF EXISTS records")
         cur.execute("DROP TABLE IF EXISTS habitos")
+        cur.execute("CREATE TABLE IF NOT EXISTS habitos (id SERIAL PRIMARY KEY, name VARCHAR(200) UNIQUE)")
+        cur.execute("CREATE TABLE IF NOT EXISTS records (id SERIAL PRIMARY KEY, habito_name VARCHAR(100), frequencia INT DEFAULT 0, hora DATE DEFAULT CURRENT_DATE, FOREIGN KEY (habito_name) REFERENCES habitos(name) ON DELETE CASCADE)")
         conn.commit()
-        print("DELETANDO")
-        cur.execute(
-            "CREATE TABLE IF NOT EXISTS habitos (id SERIAL PRIMARY KEY, name VARCHAR(200) UNIQUE)")
-        conn.commit()
-        cur.execute(
-            "CREATE TABLE IF NOT EXISTS records (id SERIAL PRIMARY KEY, habito_name VARCHAR(100), frequencia INT DEFAULT 0, hora DATE DEFAULT CURRENT_DATE, FOREIGN KEY (habito_name) REFERENCES habitos(name) ON DELETE CASCADE)")
-        print("CRIANDO...\n RESETADO")
-        conn.commit()
-    except:
-        print("ruim ERRORR")
+        cur.close()
+        conn.close()
+        return {"status": "success", "message": "Dados resetados"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
