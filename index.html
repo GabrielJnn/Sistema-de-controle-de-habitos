@@ -1,13 +1,32 @@
-<html>
-    <body>
-        <h1>Sistema de Controle de Hábitos</h1>
-        <button id="iniciarSistema">iniciar sistema</button>
-        <button id ="criarHabito" >criar um hábito</button>
-        <button id="informaçõesHabitos">informações dos hábitos</button>
-        <button id="apagarDados">apagar dados</button>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Controle de Hábitos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Controle de Hábitos</h1>
+        
+        <div class="actions">
+            <button id="iniciarSistema">Criar Tabelas</button>
+            <button id="informaçõesHabitos">Ver Hábitos</button>
+            <button id="apagarDados" class="danger">Resetar Dados</button>
+        </div>
+
+        <div class="input-group">
+            <input type="text" id="habito" placeholder="Digite o nome do novo hábito">
+            <button id="criarHabito">Criar Hábito</button>
+        </div>
+
         <p id="mensagem"></p>
-        <label for="habito">Hábito:</label>
-        <input type="text" id="habito" name="habito" placeholder="Digite o nome do hábito">
-        <script src="script.js"></script>
-    </body>
+
+        <div id="listaHabitos"></div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
 </html>
