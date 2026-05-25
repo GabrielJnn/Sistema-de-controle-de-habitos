@@ -1,6 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import psycopg2
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI()
 
@@ -13,7 +18,14 @@ app.add_middleware(
 )
 
 def get_db_connection():
-    return psycopg2.connect("host=127.0.0.1 dbname=sistema_de_controle_de_habitos user=postgres password=1234")
+    db_host = os.getenv("DB_HOST", "127.0.0.1")
+    db_name = os.getenv("DB_NAME", "sistema_de_controle_de_habitos")
+    db_user = os.getenv("DB_USER", "postgres")
+    db_pass = os.getenv("DB_PASS", "1234")
+    return psycopg2.connect(f"host={db_host} dbname={db_name} user={db_user} password={db_pass}")
+
+class HabitoCreate(BaseModel):
+    name: str
 
 @app.post("/criar_tabelas")
 def criar_tabelas():
@@ -30,16 +42,16 @@ def criar_tabelas():
         return {"status": "error", "message": str(e)}
 
 @app.post("/criar_habito")
-def criar_habito(nameHabit: str):
+def criar_habito(habito: HabitoCreate):
     try:
         conn = get_db_connection()
         cur = conn.cursor() 
-        cur.execute("INSERT INTO habitos (name) VALUES (%s)", (nameHabit,))
-        cur.execute("INSERT INTO records (habito_name) VALUES (%s)", (nameHabit,))
+        cur.execute("INSERT INTO habitos (name) VALUES (%s)", (habito.name,))
+        cur.execute("INSERT INTO records (habito_name) VALUES (%s)", (habito.name,))
         conn.commit()
         cur.close()
         conn.close()
-        return {"status": "success", "message": f"Hábito '{nameHabit}' criado"}
+        return {"status": "success", "message": f"Hábito '{habito.name}' criado"}
     except Exception as e:
         return {"status": "error", "message": "Erro, o nome deve ser único ou inválido"}
 
