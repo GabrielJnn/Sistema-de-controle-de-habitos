@@ -13,3 +13,9 @@ env/
 
 # Plano de Melhorias
 plano_10_passos.md
+
+# Testes e Scripts
+teste.md
+videos/
+test_ui.py
+run_all.ps1
